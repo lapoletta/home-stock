@@ -1,60 +1,221 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Мои запасы</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f6f5f2;color:#242424;margin:0}.app{max-width:760px;margin:auto;padding:18px 14px 100px}h1{font-size:28px;margin:0}.sub{color:#777;font-size:13px}.tabs,.filters{display:flex;gap:8px;overflow:auto;margin:12px 0}.tab,.filter,.btn,.buy{border:0;border-radius:12px;padding:9px 12px;background:#e9e7e2;white-space:nowrap}.tab.active,.filter.active,.buy{background:#242424;color:#fff}.search{width:100%;padding:14px 16px;border:1px solid #ddd;border-radius:14px;font-size:16px;background:#fff}.card{background:#fff;border-radius:17px;padding:14px;margin:9px 0;box-shadow:0 1px 3px #0001}.row{display:flex;justify-content:space-between;gap:12px}.name{font-weight:650}.meta{font-size:12px;color:#777;margin-top:5px}.badge{font-size:12px;padding:5px 9px;border-radius:12px}.ok{background:#e8f5e9}.low{background:#fff4d6}.out{background:#ffe6e6}.controls{display:flex;align-items:center;gap:8px;margin-top:12px}.btn{width:36px;height:34px;padding:0;font-size:19px}.qty{min-width:72px;text-align:center;font-weight:650}.buy{margin-left:auto}.bought{background:#e9e9e9;color:#777}.section{font-size:13px;color:#777;margin:20px 4px 7px;text-transform:uppercase}.empty{text-align:center;padding:45px 15px;color:#888}.add{position:fixed;bottom:18px;right:18px;border:0;border-radius:50%;width:58px;height:58px;background:#242424;color:#fff;font-size:28px}.modal{position:fixed;inset:0;background:#0005;display:none;align-items:flex-end}.modal.open{display:flex}.sheet{background:#fff;width:100%;max-width:760px;margin:auto;border-radius:22px 22px 0 0;padding:20px;max-height:90vh;overflow:auto}.field{margin:12px 0}.field label{display:block;font-size:12px;color:#777;margin-bottom:5px}.field input,.field select{width:100%;padding:12px;border:1px solid #ddd;border-radius:11px;font-size:15px}.save{width:100%;padding:13px;border:0;border-radius:12px;background:#242424;color:#fff;font-size:16px}.check{display:flex;gap:8px;flex-wrap:wrap}.check label{display:flex;align-items:center;gap:5px;background:#f2f1ee;padding:7px 9px;border-radius:10px}.danger{width:100%;padding:12px;border:1px solid #e66;border-radius:12px;background:#fff;color:#c33;margin-top:8px}</style></head><body><div class="app"><h1>🏠 Мои запасы</h1><div class="sub">Выбери человека — и увидишь его запасы</div><div class="tabs" id="owners"><button type="button" class="tab active" data-owner="Все">Все</button><button type="button" class="tab" data-owner="Олик">Олик</button><button type="button" class="tab" data-owner="Вовик">Вовик</button><button type="button" class="tab" data-owner="Ник">Ник</button><button type="button" class="tab" data-owner="Макс">Макс</button><button type="button" class="tab" data-owner="buy">🛒 Купить <span id="buyCount"></span></button></div><input id="search" class="search" placeholder="🔍 Что ищем? Например, зубная паста"><div class="sub" style="margin:10px 2px 7px">Категория</div><div id="filters" class="filters"></div><div id="content"></div></div><button class="add" id="add">+</button><div class="modal" id="modal"><div class="sheet"><div class="row"><h2 id="modalTitle">Добавить товар</h2><button class="btn" id="close">×</button></div><div class="field"><label>Название</label><input id="fName"></div><div class="field"><label>Категория</label><select id="fCat"></select></div><div class="field"><label>Кому</label><div id="ownerChecks" class="check"></div></div><div class="field"><label>Количество</label><input id="fQty" type="number" min="0"></div><div class="field"><label>Единица</label><input id="fUnit" placeholder="шт., рул., уп., бутылка..."></div><div class="field"><label>Минимальный запас</label><input id="fMin" type="number" min="0"></div><div class="field"><label>Теги</label><input id="fTags" placeholder="например: уборка, туалет"></div><button class="save" id="save">Сохранить</button><button class="danger" id="deleteBtn" style="display:none">Удалить товар</button></div></div><script>
-const CATS=["Гигиена","Ванная","Уход Олика","Расходники","Хозтовары"], OWN=["Олик","Вовик","Ник","Макс","Все"];
-const seed=[
-["Зубная паста","Гигиена","Олик + Вовик",2,"шт.",1,"гигиена"],["Зубная паста","Гигиена","Ник",1,"шт.",1,"дети,гигиена"],["Зубная паста","Гигиена","Макс",1,"шт.",1,"дети,гигиена"],["Зубная щётка","Гигиена","Олик",1,"шт.",1,"гигиена"],["Зубная щётка","Гигиена","Вовик",1,"шт.",1,"гигиена"],["Зубная щётка","Гигиена","Ник",1,"шт.",1,"дети"],["Зубная щётка","Гигиена","Макс",1,"шт.",1,"дети"],["Мыло","Ванная","Все",2,"шт.",1,""],["Шампунь","Ванная","Все",1,"шт.",1,""],["Соль для ванны","Ванная","Все",1,"уп.",1,""],["Бомбочки для ванны","Ванная","Все",3,"шт.",1,""],["Пенка для умывания","Уход Олика","Олик",1,"шт.",1,"уход"],["Маска / кондиционер для волос","Уход Олика","Олик",1,"шт.",1,"уход"],["Крем для лица","Уход Олика","Олик",1,"шт.",1,"уход"],["Сыворотка для лица","Уход Олика","Олик",1,"шт.",1,"уход"],["Ватные диски","Расходники","Олик",1,"уп.",1,"расходники"],["Ватные палочки","Расходники","Все",1,"уп.",1,"расходники"],["Туалетная бумага","Расходники","Все",8,"рул.",4,"туалет,расходники"],["Гель для стирки","Хозтовары","Все",1,"бутылка",1,"стирка"],["Кондиционер для белья","Хозтовары","Все",1,"бутылка",1,"стирка"],["Кондиционер для сушильной машины","Хозтовары","Все",1,"уп.",1,"сушка"],["Bref для унитаза (шарики)","Хозтовары","Все",2,"шт.",1,"туалет"],["Средство для мытья ванной","Хозтовары","Все",1,"бутылка",1,"уборка,ванная"],["Средство для мытья унитаза","Хозтовары","Все",1,"бутылка",1,"уборка,туалет"]
-].map((x,i)=>({id:i+1,name:x[0],cat:x[1],owner:x[2],qty:x[3],unit:x[4],min:x[5],tags:x[6],buy:false}));
-let items=seed,owner="Все",cat="Все",view="stock",editId=null;try{const saved=localStorage.getItem("homeStockV9");if(saved){const parsed=JSON.parse(saved);if(Array.isArray(parsed))items=parsed}}catch(e){localStorage.removeItem("homeStockV9")};
-const $=id=>document.getElementById(id);
-function saveData(){localStorage.setItem("homeStockV9",JSON.stringify(items))}
-function status(x){return x.qty<=0?"out":x.qty<=x.min?"low":"ok"}
-function statusText(x){return x.qty<=0?"Закончился":x.qty<=x.min?"Заканчивается":"Есть"}
-function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache">
+<title>Мои запасы</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f6f5f2;color:#242424;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.app{max-width:760px;margin:auto;padding:18px 14px 100px}h1{margin:0;font-size:28px}.sub{color:#777;font-size:13px}
+.tabs,.filters{display:flex;gap:8px;overflow-x:auto;margin:12px 0}.tab,.filter,.btn,.buy{border:0;border-radius:12px;padding:9px 12px;background:#e9e7e2;white-space:nowrap;cursor:pointer}.tab.active,.filter.active,.buy{background:#242424;color:white}
+.search{width:100%;padding:14px 16px;border:1px solid #ddd;border-radius:14px;font-size:16px;background:white}.section{font-size:13px;color:#777;margin:20px 4px 7px;text-transform:uppercase}
+.card{background:white;border-radius:17px;padding:14px;margin:9px 0;box-shadow:0 1px 3px #0001}.row{display:flex;justify-content:space-between;gap:12px}.name{font-weight:650}.meta{font-size:12px;color:#777;margin-top:5px}.badge{font-size:12px;padding:5px 9px;border-radius:12px}.ok{background:#e8f5e9}.low{background:#fff4d6}.out{background:#ffe6e6}
+.controls{display:flex;align-items:center;gap:8px;margin-top:12px}.btn{width:36px;height:34px;padding:0;font-size:19px}.qty{min-width:72px;text-align:center;font-weight:650}.buy{margin-left:auto}.bought{background:#e9e9e9;color:#777}.empty{text-align:center;padding:45px 15px;color:#888}
+.add{position:fixed;bottom:18px;right:18px;border:0;border-radius:50%;width:58px;height:58px;background:#242424;color:white;font-size:28px;cursor:pointer}
+.modal{position:fixed;inset:0;background:#0005;display:none;align-items:flex-end}.modal.open{display:flex}.sheet{background:white;width:100%;max-width:760px;margin:auto;border-radius:22px 22px 0 0;padding:20px;max-height:90vh;overflow:auto}
+.field{margin:12px 0}.field label{display:block;font-size:12px;color:#777;margin-bottom:5px}.field input,.field select{width:100%;padding:12px;border:1px solid #ddd;border-radius:11px;font-size:15px}.save{width:100%;padding:13px;border:0;border-radius:12px;background:#242424;color:white;font-size:16px}.check{display:flex;gap:8px;flex-wrap:wrap}.check label{display:flex;align-items:center;gap:5px;background:#f2f1ee;padding:7px 9px;border-radius:10px}.danger{width:100%;padding:12px;border:1px solid #e66;border-radius:12px;background:white;color:#c33;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="app">
+<h1>🏠 Мои запасы</h1>
+<div class="sub">Выбери человека — и увидишь его запасы</div>
+<div class="tabs" id="owners">
+<button type="button" class="tab active" data-owner="Все">Все</button>
+<button type="button" class="tab" data-owner="Олик">Олик</button>
+<button type="button" class="tab" data-owner="Вовик">Вовик</button>
+<button type="button" class="tab" data-owner="Ник">Ник</button>
+<button type="button" class="tab" data-owner="Макс">Макс</button>
+<button type="button" class="tab" data-owner="buy">🛒 Купить <span id="buyCount"></span></button>
+</div>
+<input id="search" class="search" placeholder="🔍 Что ищем? Например, зубная паста">
+<div class="sub" style="margin:10px 2px 7px">Категория</div>
+<div id="filters" class="filters"></div>
+<div id="content"></div>
+</div>
+<button type="button" class="add" id="add">+</button>
+
+<div class="modal" id="modal">
+<div class="sheet">
+<div class="row"><h2 id="modalTitle">Добавить товар</h2><button type="button" class="btn" id="close">×</button></div>
+<div class="field"><label>Название</label><input id="fName"></div>
+<div class="field"><label>Категория</label><select id="fCat"></select></div>
+<div class="field"><label>Кому</label><div id="ownerChecks" class="check"></div></div>
+<div class="field"><label>Количество</label><input id="fQty" type="number" min="0"></div>
+<div class="field"><label>Единица</label><input id="fUnit" placeholder="шт., рул., уп., бутылка..."></div>
+<div class="field"><label>Минимальный запас</label><input id="fMin" type="number" min="0"></div>
+<div class="field"><label>Теги</label><input id="fTags" placeholder="например: уборка, туалет"></div>
+<button type="button" class="save" id="save">Сохранить</button>
+<button type="button" class="danger" id="deleteBtn" style="display:none">Удалить товар</button>
+</div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+var CATS=["Гигиена","Ванная","Уход Олика","Расходники","Хозтовары"];
+var PEOPLE=["Олик","Вовик","Ник","Макс"];
+
+var seed=[
+["Зубная паста","Гигиена","Олик + Вовик",2,"шт.",1,"гигиена"],
+["Зубная паста","Гигиена","Ник",1,"шт.",1,"дети,гигиена"],
+["Зубная паста","Гигиена","Макс",1,"шт.",1,"дети,гигиена"],
+["Зубная щётка","Гигиена","Олик",1,"шт.",1,"гигиена"],
+["Зубная щётка","Гигиена","Вовик",1,"шт.",1,"гигиена"],
+["Зубная щётка","Гигиена","Ник",1,"шт.",1,"дети"],
+["Зубная щётка","Гигиена","Макс",1,"шт.",1,"дети"],
+["Мыло","Ванная","Все",2,"шт.",1,""],
+["Шампунь","Ванная","Все",1,"шт.",1,""],
+["Соль для ванны","Ванная","Все",1,"уп.",1,""],
+["Бомбочки для ванны","Ванная","Все",3,"шт.",1,""],
+["Пенка для умывания","Уход Олика","Олик",1,"шт.",1,"уход"],
+["Маска / кондиционер для волос","Уход Олика","Олик",1,"шт.",1,"уход"],
+["Крем для лица","Уход Олика","Олик",1,"шт.",1,"уход"],
+["Сыворотка для лица","Уход Олика","Олик",1,"шт.",1,"уход"],
+["Ватные диски","Расходники","Олик",1,"уп.",1,"расходники"],
+["Ватные палочки","Расходники","Все",1,"уп.",1,"расходники"],
+["Туалетная бумага","Расходники","Все",8,"рул.",4,"туалет,расходники"],
+["Гель для стирки","Хозтовары","Все",1,"бутылка",1,"стирка"],
+["Кондиционер для белья","Хозтовары","Все",1,"бутылка",1,"стирка"],
+["Кондиционер для сушильной машины","Хозтовары","Все",1,"уп.",1,"сушка"],
+["Bref для унитаза (шарики)","Хозтовары","Все",2,"шт.",1,"туалет"],
+["Средство для мытья ванной","Хозтовары","Все",1,"бутылка",1,"уборка,ванная"],
+["Средство для мытья унитаза","Хозтовары","Все",1,"бутылка",1,"уборка,туалет"]
+];
+
+var items=seed.map(function(a,i){return {id:i+1,name:a[0],cat:a[1],owner:a[2],qty:a[3],unit:a[4],min:a[5],tags:a[6],buy:false};});
+var owner="Все",cat="Все",view="stock",editId=null;
+var KEY="homeStockV10";
+
+try{
+var saved=localStorage.getItem(KEY);
+if(saved){var parsed=JSON.parse(saved);if(Array.isArray(parsed))items=parsed;}
+}catch(e){}
+
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function saveData(){try{localStorage.setItem(KEY,JSON.stringify(items));}catch(e){}}
+function status(x){return x.qty<=0?"out":x.qty<=x.min?"low":"ok";}
+function statusText(x){return x.qty<=0?"Закончился":x.qty<=x.min?"Заканчивается":"Есть";}
+
 function render(){
-  const q=$("search").value.toLowerCase();
-  $("buyCount").textContent=items.filter(x=>x.buy).length?"("+items.filter(x=>x.buy).length+")":"";
-  const list=items.filter(x=>(view==="buy"?x.buy:true)&&(owner==="Все"||x.owner.split(" + ").includes(owner))&&(cat==="Все"||x.cat===cat)&&x.name.toLowerCase().includes(q));
-  $("content").innerHTML="";
-  if(!list.length){
-    $("content").innerHTML='<div class="empty">'+(view==="buy"?"🎉 Список покупок пуст":"Ничего не найдено")+"</div>";
-    return;
-  }
-  const groups={};
-  list.forEach(x=>(groups[x.cat]??=[]).push(x));
-  Object.entries(groups).forEach(([g,a])=>{
-    if(view==="stock") $("content").insertAdjacentHTML("beforeend",'<div class="section">'+esc(g)+"</div>");
-    a.forEach(x=>{
-      const st=status(x);
-      const card=`
-        <div class="card">
-          <div class="row">
-            <div>
-              <div class="name">${esc(x.name)}</div>
-              <div class="meta">👤 ${esc(x.owner)}</div>
-              ${x.tags?'<div class="meta"># '+esc(x.tags.split(",").join("  #"))+"</div>":""}
-            </div>
-            <span class="badge ${st}">${statusText(x)}</span>
-          </div>
-          <div class="controls">
-            <button class="btn" onclick="change(${x.id},-1)">−</button>
-            <div class="qty">${x.qty} ${esc(x.unit)}</div>
-            <button class="btn" onclick="change(${x.id},1)">+</button>
-            <button class="buy ${x.buy?"bought":""}" onclick="toggleBuy(${x.id})">${x.buy?"✓ В списке":"🛒 Купить"}</button>
-            <button class="btn" onclick="edit(${x.id})">✎</button>
-          </div>
-        </div>`;
-      $("content").insertAdjacentHTML("beforeend",card);
-    });
-  });
+var q=$("search").value.toLowerCase().trim();
+var buyCount=items.filter(function(x){return x.buy;}).length;
+$("buyCount").textContent=buyCount?"("+buyCount+")":"";
+
+var list=items.filter(function(x){
+return (view==="buy"?x.buy:true)
+&& (owner==="Все" || x.owner.split(" + ").indexOf(owner)>=0)
+&& (cat==="Все" || x.cat===cat)
+&& x.name.toLowerCase().indexOf(q)>=0;
+});
+
+var html="";
+if(!list.length){
+$("content").innerHTML='<div class="empty">'+(view==="buy"?"🎉 Список покупок пуст":"Ничего не найдено")+"</div>";
+return;
 }
-function change(id,d){const x=items.find(x=>x.id===id);x.qty=Math.max(0,x.qty+d);if(x.qty<=x.min)x.buy=true;saveData();render()}
-function toggleBuy(id){const x=items.find(x=>x.id===id);x.buy=!x.buy;saveData();render()}
-function edit(id){const x=items.find(x=>x.id===id);editId=id;$("modalTitle").textContent="Редактировать товар";$("deleteBtn").style.display="block";$("fName").value=x.name;$("fCat").value=x.cat;$("ownerChecks").querySelectorAll("input").forEach(c=>c.checked=x.owner.split(" + ").includes(c.value));$("fQty").value=x.qty;$("fUnit").value=x.unit;$("fMin").value=x.min;$("fTags").value=x.tags;$("modal").classList.add("open")}
-function openAdd(){editId=null;$("modalTitle").textContent="Добавить товар";$("deleteBtn").style.display="none";["fName","fUnit","fTags"].forEach(id=>$(id).value="");$("fQty").value=1;$("fMin").value=1;$("fCat").value=CATS[0];$("ownerChecks").querySelectorAll("input").forEach(c=>c.checked=false);$("modal").classList.add("open")}
-$("deleteBtn").onclick=()=>{if(editId&&confirm("Удалить этот товар?")){items=items.filter(x=>x.id!==editId);editId=null;saveData();$("modal").classList.remove("open");render()}};
-$("save").onclick=()=>{const selected=[...$("ownerChecks").querySelectorAll("input:checked")].map(c=>c.value),d={name:$("fName").value.trim(),cat:$("fCat").value,owner:selected.join(" + ")||"Все",qty:+$("fQty").value||0,unit:$("fUnit").value||"шт.",min:+$("fMin").value||0,tags:$("fTags").value,buy:false};if(!d.name)return;if(editId){const x=items.find(x=>x.id===editId),b=x.buy;Object.assign(x,d);x.buy=b}else items.push({...d,id:Date.now()});saveData();$("modal").classList.remove("open");render()};
-$("add").onclick=openAdd;$("close").onclick=()=>{$("modal").classList.remove("open")};$("search").oninput=render;
-CATS.forEach(c=>$("fCat").insertAdjacentHTML("beforeend","<option>"+c+"</option>"));$("ownerChecks").innerHTML=OWN.filter(o=>o!=="Все").map(o=>'<label><input type="checkbox" value="'+o+'">'+o+"</label>").join("");
-document.getElementById("owners").addEventListener("click",e=>{const b=e.target.closest(".tab");if(!b)return;e.preventDefault();document.querySelectorAll("#owners .tab").forEach(z=>z.classList.remove("active"));b.classList.add("active");if(b.dataset.owner==="buy"){view="buy"}else{view="stock";owner=b.dataset.owner}render()});
-$("filters").innerHTML='<button class="filter active" data-cat="Все">Все</button>'+CATS.map(c=>'<button class="filter" data-cat="'+esc(c)+'">'+esc(c)+"</button>").join("");
-$("filters").addEventListener("click",e=>{const b=e.target.closest("[data-cat]");if(!b)return;cat=b.dataset.cat;document.querySelectorAll("#filters .filter").forEach(x=>x.classList.remove("active"));b.classList.add("active");render()});render();
-</script></body></html>
+
+var groups={};
+list.forEach(function(x){if(!groups[x.cat])groups[x.cat]=[];groups[x.cat].push(x);});
+
+Object.keys(groups).forEach(function(g){
+if(view==="stock")html+='<div class="section">'+esc(g)+"</div>";
+groups[g].forEach(function(x){
+var st=status(x);
+html+='<div class="card">';
+html+='<div class="row"><div><div class="name">'+esc(x.name)+"</div>";
+html+='<div class="meta">👤 '+esc(x.owner)+"</div>";
+if(x.tags)html+='<div class="meta"># '+esc(x.tags.split(",").join("  #"))+"</div>";
+html+='</div><span class="badge '+st+'">'+statusText(x)+"</span></div>";
+html+='<div class="controls">';
+html+='<button type="button" class="btn" data-action="minus" data-id="'+x.id+'">−</button>';
+html+='<div class="qty">'+x.qty+" "+esc(x.unit)+"</div>";
+html+='<button type="button" class="btn" data-action="plus" data-id="'+x.id+'">+</button>';
+html+='<button type="button" class="buy '+(x.buy?"bought":"")+'" data-action="buy" data-id="'+x.id+'">'+(x.buy?"✓ В списке":"🛒 Купить")+"</button>";
+html+='<button type="button" class="btn" data-action="edit" data-id="'+x.id+'">✎</button>';
+html+="</div></div>";
+});
+});
+$("content").innerHTML=html;
+}
+
+function setOwner(value){
+owner=value;
+view=value==="buy"?"buy":"stock";
+document.querySelectorAll("#owners .tab").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-owner")===value);});
+render();
+}
+
+$("owners").addEventListener("click",function(e){
+var b=e.target.closest(".tab");
+if(b)setOwner(b.getAttribute("data-owner"));
+});
+
+$("filters").innerHTML='<button type="button" class="filter active" data-cat="Все">Все</button>'+CATS.map(function(c){return '<button type="button" class="filter" data-cat="'+esc(c)+'">'+esc(c)+"</button>";}).join("");
+
+$("filters").addEventListener("click",function(e){
+var b=e.target.closest(".filter");if(!b)return;
+cat=b.getAttribute("data-cat");
+document.querySelectorAll("#filters .filter").forEach(function(x){x.classList.toggle("active",x===b);});
+render();
+});
+
+$("search").addEventListener("input",render);
+
+$("content").addEventListener("click",function(e){
+var b=e.target.closest("[data-action]");if(!b)return;
+var id=Number(b.getAttribute("data-id"));
+var x=items.find(function(y){return y.id===id;});
+if(!x)return;
+var action=b.getAttribute("data-action");
+if(action==="minus"){x.qty=Math.max(0,x.qty-1);if(x.qty<=x.min)x.buy=true;saveData();render();}
+if(action==="plus"){x.qty++;saveData();render();}
+if(action==="buy"){x.buy=!x.buy;saveData();render();}
+if(action==="edit")openEdit(id);
+});
+
+CATS.forEach(function(c){$("fCat").insertAdjacentHTML("beforeend","<option>"+esc(c)+"</option>");});
+$("ownerChecks").innerHTML=PEOPLE.map(function(p){return '<label><input type="checkbox" value="'+p+'">'+p+"</label>";}).join("");
+
+function openEdit(id){
+var x=items.find(function(y){return y.id===id;});if(!x)return;
+editId=id;$("modalTitle").textContent="Редактировать товар";$("deleteBtn").style.display="block";
+$("fName").value=x.name;$("fCat").value=x.cat;$("fQty").value=x.qty;$("fUnit").value=x.unit;$("fMin").value=x.min;$("fTags").value=x.tags||"";
+$("ownerChecks").querySelectorAll("input").forEach(function(c){c.checked=x.owner.split(" + ").indexOf(c.value)>=0;});
+$("modal").classList.add("open");
+}
+
+function openAdd(){
+editId=null;$("modalTitle").textContent="Добавить товар";$("deleteBtn").style.display="none";
+$("fName").value="";$("fCat").value=CATS[0];$("fQty").value=1;$("fUnit").value="шт.";$("fMin").value=1;$("fTags").value="";
+$("ownerChecks").querySelectorAll("input").forEach(function(c){c.checked=false;});
+$("modal").classList.add("open");
+}
+
+$("add").addEventListener("click",openAdd);
+$("close").addEventListener("click",function(){$("modal").classList.remove("open");});
+
+$("save").addEventListener("click",function(){
+var selected=Array.from($("ownerChecks").querySelectorAll("input:checked")).map(function(c){return c.value;});
+var d={name:$("fName").value.trim(),cat:$("fCat").value,owner:selected.join(" + ")||"Все",qty:Math.max(0,Number($("fQty").value)||0),unit:$("fUnit").value.trim()||"шт.",min:Math.max(0,Number($("fMin").value)||0),tags:$("fTags").value.trim(),buy:false};
+if(!d.name)return;
+if(editId){
+var x=items.find(function(y){return y.id===editId;});
+if(x){var oldBuy=x.buy;Object.assign(x,d);x.buy=oldBuy;}
+}else{d.id=Date.now();items.push(d);}
+saveData();$("modal").classList.remove("open");render();
+});
+
+$("deleteBtn").addEventListener("click",function(){
+if(!editId)return;
+if(confirm("Удалить этот товар?")){items=items.filter(function(x){return x.id!==editId;});editId=null;saveData();$("modal").classList.remove("open");render();}
+});
+
+render();
+})();
+</script>
+</body>
+</html>
