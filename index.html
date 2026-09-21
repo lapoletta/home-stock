@@ -9,7 +9,43 @@ function saveData(){localStorage.setItem("homeStockV9",JSON.stringify(items))}
 function status(x){return x.qty<=0?"out":x.qty<=x.min?"low":"ok"}
 function statusText(x){return x.qty<=0?"Закончился":x.qty<=x.min?"Заканчивается":"Есть"}
 function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
-function render(){const q=$("search").value.toLowerCase();$("buyCount").textContent=items.filter(x=>x.buy).length?"("+items.filter(x=>x.buy).length+")":"";let list=items.filter(x=>(view==="buy"?x.buy:true)&&(owner==="Все"||x.owner.split(" + ").includes(owner))&&(cat==="Все"||x.cat===cat)&&x.name.toLowerCase().includes(q));$("content").innerHTML="";if(!list.length){$("content").innerHTML='<div class="empty">'+(view==="buy"?"🎉 Список покупок пуст":"Ничего не найдено")+"</div>";return}let groups={};list.forEach(x=>(groups[x.cat]??=[]).push(x));Object.entries(groups).forEach(([g,a])=>{if(view==="stock")$("content").insertAdjacentHTML("beforeend",'<div class="section">'+esc(g)+"</div>");a.forEach(x=>{const st=status(x);$("content").insertAdjacentHTML("beforeend",'<div class="card"><div class="row"><div><div class="name">'+esc(x.name)+'</div><div class="meta">👤 '+esc(x.owner)+"</div>"+(x.tags?'<div class="meta"># '+esc(x.tags.split(",").join("  #"))+"</div>":"")+'</div><span class="badge '+st+'">'+statusText(x)+'</span></div><div class="controls"><button class="btn" onclick="change('+x.id+',-1)">−</button><div class="qty">'+x.qty+" "+esc(x.unit)+'</div><button class="btn" onclick="change('+x.id+',1)">+</button><button class="buy '+(x.buy?"bought":"")+'" onclick="toggleBuy('+x.id+')">'+(x.buy?"✓ В списке":"🛒 Купить")+'</button><button class="btn" onclick="edit('+x.id+')">✎</button></div></div>")})})}
+function render(){
+  const q=$("search").value.toLowerCase();
+  $("buyCount").textContent=items.filter(x=>x.buy).length?"("+items.filter(x=>x.buy).length+")":"";
+  const list=items.filter(x=>(view==="buy"?x.buy:true)&&(owner==="Все"||x.owner.split(" + ").includes(owner))&&(cat==="Все"||x.cat===cat)&&x.name.toLowerCase().includes(q));
+  $("content").innerHTML="";
+  if(!list.length){
+    $("content").innerHTML='<div class="empty">'+(view==="buy"?"🎉 Список покупок пуст":"Ничего не найдено")+"</div>";
+    return;
+  }
+  const groups={};
+  list.forEach(x=>(groups[x.cat]??=[]).push(x));
+  Object.entries(groups).forEach(([g,a])=>{
+    if(view==="stock") $("content").insertAdjacentHTML("beforeend",'<div class="section">'+esc(g)+"</div>");
+    a.forEach(x=>{
+      const st=status(x);
+      const card=`
+        <div class="card">
+          <div class="row">
+            <div>
+              <div class="name">${esc(x.name)}</div>
+              <div class="meta">👤 ${esc(x.owner)}</div>
+              ${x.tags?'<div class="meta"># '+esc(x.tags.split(",").join("  #"))+"</div>":""}
+            </div>
+            <span class="badge ${st}">${statusText(x)}</span>
+          </div>
+          <div class="controls">
+            <button class="btn" onclick="change(${x.id},-1)">−</button>
+            <div class="qty">${x.qty} ${esc(x.unit)}</div>
+            <button class="btn" onclick="change(${x.id},1)">+</button>
+            <button class="buy ${x.buy?"bought":""}" onclick="toggleBuy(${x.id})">${x.buy?"✓ В списке":"🛒 Купить"}</button>
+            <button class="btn" onclick="edit(${x.id})">✎</button>
+          </div>
+        </div>`;
+      $("content").insertAdjacentHTML("beforeend",card);
+    });
+  });
+}
 function change(id,d){const x=items.find(x=>x.id===id);x.qty=Math.max(0,x.qty+d);if(x.qty<=x.min)x.buy=true;saveData();render()}
 function toggleBuy(id){const x=items.find(x=>x.id===id);x.buy=!x.buy;saveData();render()}
 function edit(id){const x=items.find(x=>x.id===id);editId=id;$("modalTitle").textContent="Редактировать товар";$("deleteBtn").style.display="block";$("fName").value=x.name;$("fCat").value=x.cat;$("ownerChecks").querySelectorAll("input").forEach(c=>c.checked=x.owner.split(" + ").includes(c.value));$("fQty").value=x.qty;$("fUnit").value=x.unit;$("fMin").value=x.min;$("fTags").value=x.tags;$("modal").classList.add("open")}
